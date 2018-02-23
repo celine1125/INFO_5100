@@ -1,0 +1,86 @@
+<p id = "p1">Identify which of the following are valid Javascript types
+  (i.e. can be returned as output from the typeof() function).
+  For each valid type provide an example using console.log(typeof( ... )).
+  (30 pts)
+  <script>
+  //boolean is valid Javascript type.
+  var x = false;
+  console.log(typeof(x));
+
+  //double, float are not valid Javascript types.
+
+  //function is a valid Javascript type.
+  function mul(x, y) {
+    return x*y;
+  };
+  console.log(typeof(mul));
+
+  //int, list and map are not valid Javascript types.
+
+  //number is a valid Javascript type.
+  var a = 1;
+  console.log(typeof(a));
+
+  //object is  a valid Javascript type.
+  var list = [1, 2, 3, 4, 5];
+  console.log(typeof(list));
+
+  //regex is not a valid Javascript type.
+
+  //string is a valid Javascript type.
+  var s = 'dsafasdf';
+  console.log(typeof(s));
+
+  //tuple is not a valid Javascript type.
+
+  //undefined is a valid Javascript type.
+  var udf;
+  console.log(typeof(udf));
+
+  //unicode is not a valid Javascript type.
+  </script>
+</p>
+
+<p id = "p2"> Each of the following expressions contains improper JSON:
+  calling JSON.parse(...) will result in an error. For each example,
+  describe the error and provide a fixed version. Use the JSON.parse
+  function to demonstrate that it works. Some may contain more than one error.
+  (30 pts)
+  <script>
+  //a. { name: "Data-driven web applications" }
+  //name should be included in a double quotation mark.
+  JSON.parse('{ "name": "Data-driven web applications" }');
+
+  //b. { /* the next variable is a course number */ "number": 3300 }
+  //Comment can not be included in JSON directly, it need to be convert to a String.
+  JSON.parse('{ "comment":"/* the next variable is a course number */", "number": 3300 }');
+
+  //c. [ { "name": "DDWA", "number": 3300 } { "name": "Java",
+  //"number": 2110 } { "name": "Python", "number"; 1110 }
+  //First, it lacks a ']' in the end.
+  //Second, different objects should be seperated by ','.
+  //Third, in the last objects, behind the "number" should be a ':' rather than a ';'
+  JSON.parse(' [{ "name": "DDWA", "number": 3300 }, { "name": "Java","number": 2110 }, { "name": "Python", "number": 1110 }]')
+  </script>
+</p>
+
+<p id = "p3"> 3 . Write a JSON expression that represents a list. This list should
+  contain at least three objects. Each object should have at least three properties.
+  The value of one property should be a number, the value of another should be a
+  boolean, and value of a third should be a list of strings. You may define the
+  contents in any way you choose and add additional properties as long as we can
+  easily verify that the required elements are present. (30 pts)
+  <script>
+  var cs_course_i_take = [{"course_id": 3300, "instructor": "David Mimno", "graded": true},
+  {"course_id": 2300, "instructor": "Kyle J. Harms", "graded": true}, {"course_id": 4620,
+  "instructor": "Steve Marschner", "graded": false}];
+  </script>
+</p>
+
+<p id = "p4"> 4. Describe, in your own words, the course policy on late and
+  unreadable work outlined in the syllabus, which is linked from the course website.
+  (10 pts)
+  <script>
+  //The uncorrect format of work and late work will be graded 0 without exception.
+  </script>
+</p>
