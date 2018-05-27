@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+
+    <title>Tree Example</title>
+    <link href="./styles/font.css" rel="stylesheet">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/styles/default.min.css">
+    <style>
+    body{
+      width: 1400px;
+      font: 13px Calibri;
+      color: grey;
+      font-family: 'Merriweather Sans', sans-serif;
+    }
+  	.node {
+  		cursor: pointer;
+  	}
+  	.node circle {
+  	  fill: #fff;
+  	  stroke-width: 3px;
+  	}
+  	.node text {
+  	  font: 12px sans-serif;
+  	}
+  	.link {
+  	  stroke-width: 2px;
+  	}
+    h1 {
+      margin-top:30px; 
+      text-align: center;
+    }
+    p {
+      font-size: 13px;
+      font-style: italic;
+      padding: 0 60px;
+      margin: 0px;
+
+    }
+    span {
+      font-weight: 120pt;
+      font-style: italic;
+    }
+    fieldset {
+      font-family: 'Josefin Sans', sans-serif;
+      border: solid rgb(229, 177, 58) 1px ;
+    }
+    fieldset legend {
+      font-family: 'Merriweather Sans', sans-serif;
+      font-size: 11pt;
+      font-weight: bolder;
+      text-align: center;
+    }
+    fieldset li {
+      text-decoration: none;
+      list-style: none;
+      margin-bottom: 1.5px;
+    }
+    </style>
+
+  </head>
+  <body>
+<h1>Path To Philosophy Through Wikipedia</h1>
+<p>
+  This visualization depicts a peculiar property of <strong>Wikipedia</strong>: <span>if you navigate to a Wikipedia article, click on the first hyperlink in the article, and then repeat this process for each subsequent page, eventually you will end up on the Wikipedia page for <strong>“Philosophy”</strong> roughly 95% of the time</span>.
+</p>
+<p>
+This characteristic is a result of the classification-based nature of Wikipedia articles. The first sentence of each page is an introductory definition of the subject; inherently, when defining a topic we typically use nouns that are slightly less specific than the topic we are describing. By continuously applying this rationale and ‘going up one level of abstraction’ for each topic we encounter, eventually we end up describing Philosophy - the fundamental understanding of thought and reality.
+</p>
+<p>
+Our visualization shows the <strong>“Path to Philosophy”</strong> for 120 different topics from four different categories. <strong>Click</strong> on a <strong>node</strong> to see detailed information about that topic’s path, or on a <strong>button</strong> to filter out that category
+</p>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://d3js.org/queue.v1.min.js"></script>
+<script src="./js/buildTree.js"></script>
+<script>
+// ************** Generate the tree diagram	 *****************
+var tooltip = d3.select("body")
+  .append("div")
+  .style("position", "absolute")
+  .style("z-index", "10")
+  .style("visibility", "hidden")
+  .style("background", "#f2f2f2")
+  .style("border", "1px")
+  .style("border-radius", "4px")
+  .style("padding", '5px');
+
+var margin = {top: 0, right: 100, bottom: 20, left: 60},
+	width = 1200 - margin.right - margin.left,
+	height = 1200 - margin.top - margin.bottom;
+
+var i = 0,
+	duration = 750,
+	root;
+var tree = d3.layout.tree()
+	.size([2 * Math.PI, width/2])
+    .separation(function(a, b) { return (a.parent == b.parent ? 0.8 : 1.5) / a.depth; });
+var diagonal = d3.svg.diagonal()
+	.projection(function(d) { return [d.y, d.x]; });
+var svg = d3.select("body").append("svg")
+	.attr("width", width + margin.right + margin.left)
+	.attr("height", height + margin.top + margin.bottom)
+var g =svg.append("g")
+	.attr("transform", "translate(" + (width/2+margin.left) + "," + (height/2+margin.top) + ")");
+
+var datamap;
+var controller;
+var colormap = {
+  'culture': {
+    deep: "#EB4A3E",
+    shallow: '#EB4A3E'
+  },
+  'CS': {
+    deep: "#F9AF1D",
+    shallow: "#F9AF1D"
+  },
+  'animals': {
+    deep: "#484B97",
+    shallow: "#484B97"
+  },
+  "sports":{
+    deep: "#3E93C7",
+    shallow: '#3E93C7'
+  }
+}
+var data;
+
+d3.select(self.frameElement).style("height", "500px");
+
+queue()
+  .defer(d3.json, "./data/culture_tree.json")
+  .defer(d3.json, "./data/compsci_tree.json")
+  .defer(d3.json, "./data/animals_tree.json")
+  .defer(d3.json, "./data/sports_tree.json")
+  .await(function(err, data1, data2, data3, data4) {
+    datamap = {
+      'culture': data1.filter(d=>d!=undefined),
+      'CS': data2.filter(d=>d!=undefined),
+      'animals': data3.filter(d=>d!=undefined),
+      'sports': data4.filter(d=>d!=undefined)
+    }
+    controller = {
+      'culture': true,
+      'CS': true,
+      'animals': true,
+      'sports': true
+    }
+
+    var button = svg.selectAll(".button")
+      .data(Object.keys(controller))
+      .enter()
+      .append("g")
+      .attr('class', "button")
+      .attr('cursor', "pointer")
+      .on('mousemove', function() {
+        d3.select(this).select("rect").attr("opacity", 1)
+      })
+      .on('mouseout', function() {
+        d3.select(this).select("rect").attr("opacity", 0.9)
+      })
+      .on('click', function(d){        
+        controller[d] = !controller[d];
+        d3.select(this).select("rect")
+        .attr('fill', function(d) {
+          return controller[d]?colormap[d].deep:"#fff";
+        });
+        d3.select(this).select("text")
+        .attr('fill', function(d) {
+          return controller[d]?"#fff":colormap[d].deep;
+        })
+        update(500);
+      })
+
+    button
+      .append("rect")
+      .attr('x', function(d, i) {return i*80+margin.left})
+      .attr('y', function(d, i) {return 40})
+      .attr('width', function(d, i) {return 70})
+      .attr('height', function(d, i) {return 40})
+      .attr('fill', function(d) {
+        return controller[d]?colormap[d].deep:"#fff";
+      })
+      .attr('stroke-width', "2px")
+      .attr('stroke', function(d) {
+        return colormap[d].deep;
+      })
+      .attr("opacity", 0.9)
+      .attr("rx", 5)
+      .attr("ry", 5)
+
+    button
+      .append("text")
+      .attr('x', function(d, i) {return i*80+margin.left+35})
+      .attr('y', function(d, i) {return 40+25})
+      .attr('text-anchor', 'middle')
+      .attr('fill', "#fff")
+      .text(function(d) {return d});
+
+    update(500);
+
+  })
+
+function update(duration) {
+
+  var map = d3.map();
+  var root = {};
+  data = [];
+  var maxDepth = 0;
+  for(var key in controller) {
+    if(controller[key]) {
+      root = stratify(map, datamap[key], key);
+      var words = datamap[key].map(d => d[d.length-1]);
+      maxDepth = Math.max(maxDepth, d3.max(datamap[key].map(d=>d.length))) 
+      words = words.map(function(d) {return {id:d, group:key}})
+      data = data.concat(words)
+    }
+  }
+
+  nodes = tree.nodes(root).reverse(),
+  links = tree.links(nodes);
+  showWordList(data)
+
+  var raidus = d3.range(0, maxDepth, 1)
+
+  var circle = g.selectAll(".circle")
+    .data(raidus)
+
+  var circleExit = circle.exit().remove();
+
+  var circleEnter = circle
+    .enter()
+    .append('circle')
+    .attr("class", "circle")
+    .attr('cx', 0)
+    .attr('cy', 0)
+    .attr('r', 0)
+    .attr('fill', 'none')
+    .attr('stroke', 'grey')
+    .attr('opacity', 0.1)
+
+  circle
+    .attr("r",function(d) {return (d+1)*width/2/maxDepth;})
+
+
+  var link = g.selectAll(".link")
+    .data(links)
+
+
+  var linkEnter = link.enter()
+    .insert("path")
+    .attr("class", "link")
+    .attr("stroke","#ccc")
+    .attr("d", function(d) {
+      var o = {y:0, x:0}
+      var i = {y:0, x:0}
+      return diagonal({source: o, target: i});
+    });
+
+
+  link.transition()
+    .duration(duration)
+    .attr('stroke', '#ccc')
+    .attr("id", function(d) {
+      return d.target.id;
+    })
+    .attr("fill", 'none')
+    .attr("d", function(d) {
+      var i = {y:xs(d.source), x:ys(d.source)}
+      var o = {y:xs(d.target), x:ys(d.target)}
+      return diagonal({source: o, target: i});
+    })
+
+  link.exit().remove();
+
+  var node = g.selectAll(".node")
+    .data(nodes)
+
+  node.exit().remove()
+
+  var nodeEnter = node.enter()
+    .append("g")
+    .attr("class", "node");
+
+  nodeEnter.append("circle")
+	  .attr("r", 1e-6)
+
+  var nodeUpdate = node.transition()
+      .duration(duration)
+      .attr("id", function(d) {return d.id;})
+      .attr("class", function(d) {
+        return "node" + (d.children ? " node--internal" : " node--leaf"); })
+      .attr("transform", function(d) {
+        return "translate(" + xs(d) + "," + ys(d) + ")";})
+
+  node.select("circle")
+      .attr("r", function(d) {
+        return d.id=="Philosophy"?4:2
+      })
+      .attr("stroke", function(d) {
+        return d.id == 'Philosophy'?"grey":d.group?colormap[d.group].shallow:"#ccc";
+      })
+      .on("mousemove", function(d){
+        d3.select(this).attr("r", 5);
+        tooltip
+          .text(d.id.replace(/_|:/g, " "))
+          .style("visibility", "visible")
+          .style("top", (event.pageY-15)+"px").style("left",(event.pageX+5)+"px");})
+      .on("mouseout", function(d){
+        d3.select(this)
+        .attr("r", function(d) {
+          return d.id=="Philosophy"?4:2
+        })
+        tooltip.style("visibility", "hidden");
+      })
+      .on('click', function(d) {
+        if(!d.highlighted) {
+          d.highlighted = true;
+          highlight(d);
+        } else {
+          d.highlighted = false;
+          recover(d);
+        }
+      })
+
+  nodes.forEach(function(d) {
+    d.x0 = d.x;
+    d.y0 = d.y;
+  });
+};
+
+
+function xs(d) { return isNaN(d.x)?0:d.y * Math.cos(d.x - Math.PI / 2); }
+function ys(d) { return isNaN(d.x)?0:d.y * Math.sin(d.x - Math.PI / 2); }
+
+function recover(d) {
+  d3.select("fieldset").remove();
+  svg.selectAll('.node circle')
+  .attr("stroke", function(g) {
+    return g.id=="Philosophy"?"grey": g.group?colormap[g.group].shallow:"#ccc";
+  })
+  svg.selectAll('.link')
+  .attr("stroke", function(g) {
+    return "#ccc";
+  })
+}
+
+function showWordList(data) {
+
+  d3.select("fieldset").remove();
+  var fieldset = d3.select("body").append("fieldset")
+    .style("position", "absolute")
+    .style("left", (width+margin['left']+margin['right'])+"px")
+    .style("top", 240+"px");
+
+  fieldset.append("legend").html("Word List");
+  data.forEach(function(element) {
+      fieldset.append("li")
+      .html("<strong>"+ element.id +"</strong> ")
+    })
+}
+
+function highlight(d) {
+  d3.select("fieldset").remove();
+  var path = new Set();
+  var node = d;
+  var i = 0;
+  while (node.depth>0) {
+    path.add(node.id);
+    node = node.parent;
+  }
+  path.add(node.id);
+  var legend;
+  legend = d.id;
+  d3.select("fieldset").remove();
+  var fieldset = d3.select("body").append("fieldset")
+    .style("position", "absolute")
+    .style("left", (width+margin['left']+margin['right'])+"px")
+    .style("top", 240+"px");
+  fieldset.append("legend").html("Path from "+legend + " to Philosophy");
+  path.forEach(function(element) {
+    fieldset.append("li")
+    .html("<strong>"+ element.replace(/_|:/g, " ") +"</strong> ")
+  })
+  if(d.group) {  
+    svg.selectAll('.node circle')
+    .attr("stroke", function(g) {
+      if(path.has(g.id)) {
+        return colormap[d.group].deep;
+      }
+      else return "#ccc"
+    })
+    svg.selectAll('.link')
+    .attr("stroke", function(g) {
+      if(path.has(g.target.id)) {
+        i+=1; 
+        console.log(i);
+        console.log(g.target.id);
+        return colormap[d.group].deep;
+      }
+      else return "#ccc";
+    })
+  } 
+
+}
+</script>
+
+  </body>
+</html>
