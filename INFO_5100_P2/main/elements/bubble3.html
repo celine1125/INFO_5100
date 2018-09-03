@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="http://d3js.org/topojson.v2.min.js"></script>
+    <title>Project 2</title>
+  </head>
+
+  <body>
+    <svg id="f1" height="600" width="1000"/>
+    <style>
+      svg { border: solid #ccc 1px; }
+    </style>
+    <script>
+
+
+
+    var svg = d3.select("#f1")
+    var circlesPosition = new Array();   //array stores the postion of circle
+    function drawcircles(error, data) {
+      movieData = data
+      .map(function (d){
+        return {
+          name: d.Name,
+          runtime: Number(d.RuntimeInMinutes),
+          budget: Number(d.BudgetInMillions),
+          boxRevenue: Number(d.BoxOfficeRevenueInMillions),
+          nominations: Number(d.AcademyAwardNominations),
+          wins: Number(d.AcademyAwardWins),
+          score: Number(d.RottenTomatoesScore),
+        };
+      });
+      var height=300, width=300
+      
+      var pack = d3.pack()
+          .size([width, height])
+          .padding(1.5);
+
+      var root = d3.hierarchy({children: movieData})
+      .sum(function(d) { return d.boxRevenue; })
+
+      var movies = pack(root).leaves()
+        movies.map(function(d, i) {
+          d.x = d.x-width/2;
+          d.y = d.y-height/2
+        })
+
+      console.log(movies)
+
+      var bubbles = svg.append("g")
+        .attr("transform", "translate(150,150)")
+        .selectAll(".bubble")
+        .data(movies)
+        .enter();
+
+      //create the bubbles
+      bubbles.append("circle")
+        .attr("r", function(d){ return d.r; })
+        .attr("cx", function(d){ return d.x; })
+        .attr("cy", function(d){ return d.y; })
+        .style("fill", 'orange')
+        .style('opacity', 0.8)
+
+      bubbles.append("circle")
+        .attr("r", function(d){ return d.r*d.data.budget/d.data.boxRevenue*5;})
+        .attr("cx", function(d){ return d.x; })
+        .attr("cy", function(d){ return d.y; })
+        .style("fill", 'yellow')
+
+      console.log(movieData)
+      var xMean = movieData[0].budget/3;
+      var yMean = movieData[0].boxRevenue/3;
+      var xdev = d3.scaleLinear()
+      .domain([93 - xMean, 94 - xMean])
+      .range([-50,50]);
+      var ydev = d3.scaleLinear()
+      .domain([871.5 - yMean, 1120 - yMean])
+      .range([-50,50]);
+
+       var rScale = d3.scalePow()
+      .exponent(2)
+      .domain([850,1150])
+      .range([50,60]);
+
+      var opacityScale = d3.scaleLinear()
+      .domain([2, 11])
+      .range([0.5,1]);
+      for (let index = 1; index < movieData.length; index++) {
+        element = movieData[index];
+        svg.append("circle")
+        .attr("cx", xdev(element.budget - xMean) + 350) //350 should be changed when merge
+        .attr("cy", function(){
+          if (index == 1) return 320;    //320 should be changed when merge, change to middle of y plus 20
+          else return 1.45*ydev(element.boxRevenue - yMean) + 300  // 300 should be changed
+        })
+        .attr("r", rScale(element.boxRevenue))
+        .attr("fill", "#E6A68F")
+        .attr("opacity",opacityScale(element.wins));
+        let seriesNum = "";
+        for (let i = 0; i< index; i++) {
+          seriesNum += "I";
+        }
+        if (index == 1) {
+          circlesPosition.push({cx: xdev(element.budget - xMean), cy:20});
+        } else {
+          circlesPosition.push({cx: xdev(element.budget - xMean), cy: 1.45*ydev(element.boxRevenue - yMean)});
+        }
+
+        svg.append("circle")
+        .attr("cx", xdev(element.budget - xMean) + 350)  //changed with the cx, cy of circles
+        .attr("cy", function(){
+          if (index == 1) return 320;
+          else return 1.45*ydev(element.boxRevenue - yMean) + 300
+        })
+        .attr("r", "30")
+        .attr("fill", "#D8794E")
+        .attr("opacity",opacityScale(element.wins));
+
+        svg.append("text")
+        .attr("x", xdev(element.budget - xMean) + 350)  //changed with the cx, cy of circles
+        .attr("y", function(){
+          if (index == 1) return 320;
+          else return 1.45*ydev(element.boxRevenue - yMean) + 300
+        })
+        .attr("text-anchor", "middle")
+        .attr("word-wrap", "break-word")
+        .attr("width", "20em")
+        .text(seriesNum);
+    }
+  }
+    var movies = d3.csv("../data/Movies.csv", drawcircles);
+    </script>
+  </body>
+</html>
