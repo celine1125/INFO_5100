@@ -10,10 +10,10 @@
 ## The result:
 
 ### When launch the page:
-![image_1](../results/image_1.png)
+![image_1](./results/image_1.png)
 
 ### When hover the circle:
-![image_2](../results/image_2.png)
+![image_2](./results/image_2.png)
 
 ### When hover the ribbon:
-![image_3](../results/image_3.png)
+![image_3](./results/image_3.png)
